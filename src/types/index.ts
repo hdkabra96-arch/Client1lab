@@ -24,13 +24,19 @@ export interface User {
 
 export interface TimeSlotAvailability {
   id: string;
+  timeSlotId?: string;
   label: string;
+  timeRange?: string;
   startTime?: string;
   endTime?: string;
   maxCapacity: number;
+  capacity?: number;
   currentBookings: number;
+  bookedCount?: number;
   remainingCapacity: number;
   available: boolean;
+  isAvailable?: boolean;
+  collectionMethod?: CollectionMethod | string;
 }
 
 export type CollectionMethod = 'LAB_VISIT' | 'HOME_COLLECTION';

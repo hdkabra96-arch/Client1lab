@@ -2,7 +2,7 @@
  * ApexPath Diagnostic Laboratories - Main Application
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import { Navbar } from './components/common/Navbar.tsx';
 import { Footer } from './components/common/Footer.tsx';
@@ -26,6 +26,10 @@ function MainAppContent() {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<string>('home');
   const [viewParams, setViewParams] = useState<any>({});
+
+  useEffect(() => {
+    document.title = 'ApexPath Diagnostic Laboratories';
+  }, []);
 
   // Modals
   const [bookingModalOpen, setBookingModalOpen] = useState(false);

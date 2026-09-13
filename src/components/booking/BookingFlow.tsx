@@ -174,24 +174,56 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   useEffect(() => {
     if (!selectedDate) return;
 
+    let isCancelled = false;
+
     const fetchSlots = async () => {
       setLoadingSlots(true);
       try {
-        const data = await apiRequest<{ slots: TimeSlotAvailability[] }>(
+        const data = await apiRequest<{ slots?: any[] }>(
           `/slots/available?date=${selectedDate}&collectionMethod=${collectionMethod}`
         );
-        setSlots(data.slots);
+        if (isCancelled) return;
+
+        const rawSlots = Array.isArray(data?.slots) ? data.slots : [];
+        const normalizedSlots: TimeSlotAvailability[] = rawSlots.map((s: any) => ({
+          id: s.id || s.timeSlotId || `slot-${Math.random()}`,
+          timeSlotId: s.timeSlotId || s.id,
+          label: s.label || s.timeRange || 'Available Slot',
+          timeRange: s.timeRange || s.label,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          maxCapacity: s.maxCapacity ?? s.capacity ?? 8,
+          capacity: s.capacity ?? s.maxCapacity ?? 8,
+          currentBookings: s.currentBookings ?? s.bookedCount ?? 0,
+          bookedCount: s.bookedCount ?? s.currentBookings ?? 0,
+          remainingCapacity: s.remainingCapacity ?? 0,
+          available: Boolean(s.available ?? s.isAvailable ?? (s.remainingCapacity > 0)),
+          isAvailable: Boolean(s.available ?? s.isAvailable ?? (s.remainingCapacity > 0)),
+        }));
+
+        setSlots(normalizedSlots);
         // Select first available slot
-        const firstAvail = data.slots.find((s) => s.available);
-        if (firstAvail) setSelectedSlotId(firstAvail.id);
+        const firstAvail = normalizedSlots.find((s) => s.available);
+        setSelectedSlotId((prev) => {
+          const isValidPrev = normalizedSlots.some((s) => s.id === prev && s.available);
+          return isValidPrev ? prev : (firstAvail ? firstAvail.id : '');
+        });
       } catch (err) {
+        if (isCancelled) return;
         console.error('Failed to load slots:', err);
+        setSlots([]);
       } finally {
-        setLoadingSlots(false);
+        if (!isCancelled) {
+          setLoadingSlots(false);
+        }
       }
     };
 
     fetchSlots();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [selectedDate, collectionMethod]);
 
   if (!isOpen) return null;
@@ -276,13 +308,14 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
         paymentMethod,
       };
 
-      const data = await apiRequest<{ appointment: any }>('/appointments/book', {
+      const data = await apiRequest<{ appointment?: any; booking?: any }>('/appointments/book', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
 
-      setBookingResult(data.appointment);
-      onBookingSuccess(data.appointment);
+      const confirmedAppt = data.appointment || data.booking || data;
+      setBookingResult(confirmedAppt);
+      onBookingSuccess(confirmedAppt);
       setStep(5); // Show confirmation screen
     } catch (err: any) {
       setBookingError(err.message || 'Failed to complete booking. Please try again.');
