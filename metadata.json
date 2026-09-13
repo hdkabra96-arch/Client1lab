@@ -1,0 +1,6 @@
+{
+  "name": "ApexPath Diagnostic Laboratories",
+  "description": "Comprehensive diagnostic pathology laboratory platform with seamless blood test booking, certified home sample collection, patient portal, real-time slot scheduling, and laboratory management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
